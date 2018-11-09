@@ -13,27 +13,15 @@ This library communicates with an action server named "cartMoveActionServer".
 
 ## Example usage
 Start up robot simulation in Gazebo with: 
-roslaunch irb120_description irb120.launch 
+`roslaunch irb140_description irb140.launch`
 
-start up Cartesian-move action server:
-rosrun irb120_planner irb120_cart_move_as 
+this launch file also starts up a corresponding Cartesian-move action server:
+irb140_planner/irb140_cart_move_as 
 
 Try running a sample action client:
-rosrun cartesian_motion_commander example_generic_cartesian_move_ac
 
-or:
-rosrun cartesian_motion_commander example_generic_cartesian_move_ac3
-which demonstrates how to build and execute multi-segment trajectories.
-Intent is that an entire plan can be pre-computed and evaluated before execution, and actions
-(e.g., gripper, painter on/off, etc) can be performed between trajectory segment executions
-
-or:
-`roslaunch irb140_description irb140.launch`
-`rosrun irb140_planner irb140_cart_move_as`
 `rosrun cartesian_motion_commander example_block_grabber`
-optionally:  
-`rosrun image_view image_view image:=/simple_camera/image_raw`
 
 
-## Running tests/demos
+
     

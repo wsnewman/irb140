@@ -35,10 +35,9 @@
   <!-- static transforms -->
   <include file="$(find irb140_planner)/launch/irb140_static_transforms.launch">
  </include>  
-  <!-- run node to emulate ROS-I interface publish/subscribe -->
 
-  <!-- OLD: can use traj interface with trajectory controller model -->
-  <!--node name = "irb140_ctl_interface" pkg = "irb140_ctl_interface" type = "irb140_ctl_interface" output= "screen"/-->
+  <!-- start up cartesian action  server -->
+  <node name = "irb140_cart_move_as" pkg = "irb140_planner" type = "irb140_cart_move_as" output= "screen"/>
 
 <node name="spawn_sdf" pkg="gazebo_ros" type="spawn_model" args="-file $(find exmpl_models)/toy_block/toy_block.sdf -sdf -model toy_block -x 0.5 -y 0.0 -z 0.01 -Y 1.0" />
 
