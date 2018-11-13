@@ -316,10 +316,17 @@ added gazebo control interface for simus
     <dynamics damping="0.7"/>
   </joint> 
 
+  <link name="cam_intermediate_link"/>
   <joint name="camera_joint" type="fixed">
       <parent link="world"/>
+      <child link="cam_intermediate_link"/>
+      <origin rpy="0.0 1.5708 1.5708" xyz="0.543 0.321 1.75"/>
+  </joint>
+  
+    <joint name="cam_intermediate_joint" type="fixed">
+      <parent link="cam_intermediate_link"/>
       <child link="camera_link"/>
-      <origin rpy="0.2 1.5708 1.5708" xyz="0.543 0.321 1.75"/>
+      <origin rpy="0.2 0 0.0" xyz="0 0 0"/>
   </joint>
 
   <link name="camera_link">
