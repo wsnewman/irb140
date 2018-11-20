@@ -4,6 +4,7 @@
 #include <tf/tf.h>
 
 #include <std_srvs/SetBool.h>
+#include <std_msgs/String.h>
 
 namespace gazebo{
 	class StickyFingers : public gazebo::ModelPlugin{
@@ -38,7 +39,10 @@ namespace gazebo{
 				if(this->sticky && this->held_object == NULL){
 					for(int i = 0; i < msg->contact_size(); i++){
 						physics::LinkPtr candidate = NULL;
-						if(strcmp(msg->contact(i).collision1().c_str(), this->finger_name.c_str())){
+						ROS_ERROR("1 is %s, 2 is %s, fname is %s", msg->contact(i).collision1().c_str(), msg->contact(i).collision2().c_str(), this->finger_name.c_str());
+						if(msg->contact(i).collision1().find(this->finger_name) == std::string::npos){
+						//if(strcmp(msg->contact(i).collision1().c_str(), ((this->finger_name) + "_collision_collision").c_str()) != 0){
+							ROS_ERROR("Condition 1.");
 							candidate =
 								boost::dynamic_pointer_cast<physics::Collision>(
 									this->finger_world->GetEntity(msg->contact(i).collision1())
@@ -46,10 +50,12 @@ namespace gazebo{
 							->GetLink();
 
 						}
-						if(strcmp(msg->contact(i).collision2().c_str(), this->finger_name.c_str())){
+						else if(msg->contact(i).collision2().find(this->finger_name) == std::string::npos){
+						//else if(strcmp(msg->contact(i).collision2().c_str(), ((this->finger_name) + "_collision_collision").c_str()) != 0){
+							ROS_ERROR("Condition 2.");
 							candidate =
 								boost::dynamic_pointer_cast<physics::Collision>(
-									this->finger_world->GetEntity(msg->contact(i).collision1())
+									this->finger_world->GetEntity(msg->contact(i).collision2())
 								)
 							->GetLink();
 						}
@@ -57,6 +63,13 @@ namespace gazebo{
 							if(!candidate->IsStatic()){
 								if(candidate->GetInertial()->GetMass() <= this->max_mass){//Ignore heavy objects
 									ROS_INFO("Finger grabbing link %s.", candidate->GetName().c_str());
+									std_msgs::String s;
+									s.data=candidate->GetName();
+									this->grab_pub.publish(s);
+									this->nh.setParam(
+										"sticky_finger/" + this->finger_link->GetName() + "/grabbed_object",
+										candidate->GetName()
+									);
 
 									this->held_object = candidate;
 									
@@ -83,6 +96,7 @@ namespace gazebo{
 			//ROS communication
 			ros::NodeHandle nh;
 			ros::ServiceServer service;
+			ros::Publisher grab_pub;
 			bool ControlCallback(
 				std_srvs::SetBoolRequest& request,
 				std_srvs::SetBoolResponse& response
@@ -91,11 +105,20 @@ namespace gazebo{
 					this->sticky = false;//Stop being sticky.
 					if(this->held_object != NULL){
 						this->held_object->SetCollideMode("all");
-					}
-					this->finger_link->SetCollideMode("all");//Resume collisionality
-					this->fixedJoint->Detach();
+                                            this->fixedJoint->Detach();
+					this->held_object->SetLinearVel(math::Vector3(0.0, 0.0, 0.0));
+					this->held_object->SetAngularVel(math::Vector3(0.0, 0.0, 0.0));
 					this->held_object = NULL;//Drop our held object (if any)
 					response.success = false;//Report what we just did.
+					std_msgs::String s;
+					s.data="";
+					this->grab_pub.publish(s);
+					this->nh.setParam(
+						"sticky_finger/" + this->finger_link->GetName() + "/grabbed_object",
+						""
+					);
+					}
+					//this->finger_link->SetCollideMode("all");//Resume collisionality
 					return true;
 				}
 				else if(!this->sticky && request.data){//We are not sticky and should be sticky...
@@ -158,6 +181,14 @@ namespace gazebo{
 					"sticky_finger/" + this->finger_link->GetName(),
 					&StickyFingers::ControlCallback,
 					this
+				);
+				this->grab_pub = this->nh.advertise<std_msgs::String>(
+					"sticky_finger/" + this->finger_link->GetName() + "/grab_events",
+					1, true
+				);
+				this->nh.setParam(
+					"sticky_finger/" + this->finger_link->GetName() + "/grabbed_object",
+					""
 				);
 				ROS_INFO(
 					"Sticky finger node %s listening on topic [%s].",
